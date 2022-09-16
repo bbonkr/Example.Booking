@@ -6,4 +6,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Microsoft.EntityFrameworkCore.Relational" />
+    <None Remove="EntityTypeConfigurations\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Example.Booking.Entities\Example.Booking.Entities.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="EntityTypeConfigurations\" />
+  </ItemGroup>
 </Project>
