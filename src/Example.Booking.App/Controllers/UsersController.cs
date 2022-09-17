@@ -46,44 +46,56 @@ public class UsersController : ApiControllerBase
                 Name = x.Name,
                 BeforeEventBuffer = x.BeforeEventBuffer,
                 AfterEventBuffer = x.AfterEventBuffer,
-                AvailableTimeTables = x.AvailableTimeTables.Select(t => new AvailableTimeTableModel
-                {
-                    Id = t.Id,
-                    DayOfWeek = t.DayOfWeek,
-                    Start = t.Start,
-                    End = t.End,
-                }).ToList(),
-                DateTimeOverrides = x.DateTimeOverrides.Select(o => new TimeTableOverrideModel
-                {
-                    Id = o.Id,
-                    Date = o.Date,
-                    Start = o.Start,
-                    End = o.End,
-                }).ToList(),
-                ApprovedAppointments = x.ApprovedAppointments.Select(a => new AppointmentModel
-                {
-                    Id = a.Id,
-                    Date = a.Date,
-                    Start = a.Start,
-                    End = a.End,
-                    FromUser = new UserModel
+                AvailableTimeTables = x.AvailableTimeTables
+                    .OrderBy(a => a.DayOfWeek)
+                    .ThenBy(a => a.Start)
+                    .Select(t => new AvailableTimeTableModel
                     {
-                        Id = a.FromUser.Id,
-                        Name = a.FromUser.Name,
-                    },
-                }).ToList(),
-                RequestedAppointments = x.RequestedAppointments.Select(a => new AppointmentModel
-                {
-                    Id = a.Id,
-                    Date = a.Date,
-                    Start = a.Start,
-                    End = a.End,
-                    ToUser = new UserModel
+                        Id = t.Id,
+                        DayOfWeek = t.DayOfWeek,
+                        Start = t.Start,
+                        End = t.End,
+                    }).ToList(),
+                DateTimeOverrides = x.DateTimeOverrides
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(o => new TimeTableOverrideModel
                     {
-                        Id = a.ToUser.Id,
-                        Name = a.ToUser.Name,
-                    },
-                }).ToList(),
+                        Id = o.Id,
+                        Date = o.Date,
+                        Start = o.Start,
+                        End = o.End,
+                    }).ToList(),
+                ApprovedAppointments = x.ApprovedAppointments
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(a => new AppointmentModel
+                    {
+                        Id = a.Id,
+                        Date = a.Date,
+                        Start = a.Start,
+                        End = a.End,
+                        FromUser = new UserModel
+                        {
+                            Id = a.FromUser.Id,
+                            Name = a.FromUser.Name,
+                        },
+                    }).ToList(),
+                RequestedAppointments = x.RequestedAppointments
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(a => new AppointmentModel
+                    {
+                        Id = a.Id,
+                        Date = a.Date,
+                        Start = a.Start,
+                        End = a.End,
+                        ToUser = new UserModel
+                        {
+                            Id = a.ToUser.Id,
+                            Name = a.ToUser.Name,
+                        },
+                    }).ToList(),
             })
             .OrderBy(x => x.Name)
             .AsNoTracking()
@@ -115,44 +127,56 @@ public class UsersController : ApiControllerBase
                 Name = x.Name,
                 BeforeEventBuffer = x.BeforeEventBuffer,
                 AfterEventBuffer = x.AfterEventBuffer,
-                AvailableTimeTables = x.AvailableTimeTables.Select(t => new AvailableTimeTableModel
-                {
-                    Id = t.Id,
-                    DayOfWeek = t.DayOfWeek,
-                    Start = t.Start,
-                    End = t.End,
-                }).ToList(),
-                DateTimeOverrides = x.DateTimeOverrides.Select(o => new TimeTableOverrideModel
-                {
-                    Id = o.Id,
-                    Date = o.Date,
-                    Start = o.Start,
-                    End = o.End,
-                }).ToList(),
-                ApprovedAppointments = x.ApprovedAppointments.Select(a => new AppointmentModel
-                {
-                    Id = a.Id,
-                    Date = a.Date,
-                    Start = a.Start,
-                    End = a.End,
-                    FromUser = new UserModel
+                AvailableTimeTables = x.AvailableTimeTables
+                    .OrderBy(a => a.DayOfWeek)
+                    .ThenBy(a => a.Start)
+                    .Select(t => new AvailableTimeTableModel
                     {
-                        Id = a.FromUser.Id,
-                        Name = a.FromUser.Name,
-                    },
-                }).ToList(),
-                RequestedAppointments = x.RequestedAppointments.Select(a => new AppointmentModel
-                {
-                    Id = a.Id,
-                    Date = a.Date,
-                    Start = a.Start,
-                    End = a.End,
-                    ToUser = new UserModel
+                        Id = t.Id,
+                        DayOfWeek = t.DayOfWeek,
+                        Start = t.Start,
+                        End = t.End,
+                    }).ToList(),
+                DateTimeOverrides = x.DateTimeOverrides
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(o => new TimeTableOverrideModel
                     {
-                        Id = a.ToUser.Id,
-                        Name = a.ToUser.Name,
-                    },
-                }).ToList(),
+                        Id = o.Id,
+                        Date = o.Date,
+                        Start = o.Start,
+                        End = o.End,
+                    }).ToList(),
+                ApprovedAppointments = x.ApprovedAppointments
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(a => new AppointmentModel
+                    {
+                        Id = a.Id,
+                        Date = a.Date,
+                        Start = a.Start,
+                        End = a.End,
+                        FromUser = new UserModel
+                        {
+                            Id = a.FromUser.Id,
+                            Name = a.FromUser.Name,
+                        },
+                    }).ToList(),
+                RequestedAppointments = x.RequestedAppointments
+                    .OrderBy(a => a.Date)
+                    .ThenBy(a => a.Start)
+                    .Select(a => new AppointmentModel
+                    {
+                        Id = a.Id,
+                        Date = a.Date,
+                        Start = a.Start,
+                        End = a.End,
+                        ToUser = new UserModel
+                        {
+                            Id = a.ToUser.Id,
+                            Name = a.ToUser.Name,
+                        },
+                    }).ToList(),
             })
             .OrderBy(x => x.Name)
             .AsNoTracking()
