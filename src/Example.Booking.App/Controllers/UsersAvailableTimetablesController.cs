@@ -1,5 +1,6 @@
 ﻿using Example.Booking.App.Models;
 using Example.Booking.Data;
+using Example.Booking.Entities;
 using kr.bbon.AspNetCore;
 using kr.bbon.AspNetCore.Models;
 using kr.bbon.AspNetCore.Mvc;
@@ -7,6 +8,7 @@ using kr.bbon.Core;
 using kr.bbon.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Example.Booking.Extensions;
 
 namespace Example.Booking.App.Controllers;
 
@@ -60,9 +62,209 @@ public class UsersAvailableTimetablesController : ApiControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Add timetable item
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpPost]
+    [ProducesResponseType(typeof(UserAvailableTimetableModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddTimetable([FromRoute] Guid userId, [FromBody] AddAvailableTimeTableModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Payload is invaild");
+        }
+
+        var checkUserExists = await dbContext.Users.Where(x => x.Id == userId).AnyAsync();
+
+        if (!checkUserExists)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find the user");
+        }
+
+        if (!model.Start.IsValidTimeOnlyString())
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Start must be between 00:00 and 23:59");
+        }
+
+        if (!model.End.IsValidTimeOnlyString())
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "End must be between 00:00 and 23:59");
+        }
 
 
+        var timetables = await dbContext.UserAvailableTimetables
+            .Where(x => x.UserId == userId)
+            .Where(x => x.DayOfWeek == model.DayOfWeek)
+            .OrderBy(x => x.Start)
+            .ToListAsync();
 
+        if (timetables.Any())
+        {
+            foreach (var item in timetables)
+            {
+                if (model.Start.IsIncluded(item.Start, item.End))
+                {
+                    throw new ApiException(StatusCodes.Status400BadRequest, $"Start is included {item.Start}~{item.End}");
+                }
+
+                if (model.End.IsIncluded(item.Start, item.End))
+                {
+                    throw new ApiException(StatusCodes.Status400BadRequest, $"End is included {item.Start}~{item.End}");
+                }
+            }
+        }
+
+        var newItem = new UserAvailableTimetable
+        {
+            Id = Guid.NewGuid(),
+            DayOfWeek = model.DayOfWeek,
+            Start = model.Start,
+            End = model.End,
+            UserId = userId,
+        };
+
+        var addedEntry = dbContext.UserAvailableTimetables.Add(newItem);
+        var addedEntryId = addedEntry.Entity.Id;
+
+        await dbContext.SaveChangesAsync();
+
+        var result = new UserAvailableTimetableModel
+        {
+            Id = addedEntryId,
+            DayOfWeek = model.DayOfWeek,
+            Start = model.Start,
+            End = model.End,
+        };
+
+        return Created($"/users/{userId}/timetables/{addedEntryId}", result);
+    }
+
+    /// <summary>
+    /// Update timetable item
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="id"></param>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(UserAvailableTimetableModel), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateTimetable([FromRoute] Guid userId, [FromRoute] Guid id, [FromBody] UpdateAvailableTimeTableModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Payload is invaild");
+        }
+
+        var checkUserExists = await dbContext.Users.Where(x => x.Id == userId).AnyAsync();
+
+        if (!checkUserExists)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find the user");
+        }
+
+        if (!model.Start.IsValidTimeOnlyString())
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Start must be between 00:00 and 23:59");
+        }
+
+        if (!model.End.IsValidTimeOnlyString())
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "End must be between 00:00 and 23:59");
+        }
+
+        var currentTimetable = await dbContext.UserAvailableTimetables
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
+
+        if (currentTimetable == null)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find the timetable item");
+        }
+
+        var timetables = await dbContext.UserAvailableTimetables
+            .Where(x => x.UserId == userId)
+            .Where(x => x.DayOfWeek == currentTimetable.DayOfWeek)
+            .Where(x => x.Id != currentTimetable.Id)
+            .OrderBy(x => x.Start)
+            .ToListAsync();
+
+        if (timetables.Any())
+        {
+            foreach (var item in timetables)
+            {
+                if (model.Start.IsIncluded(item.Start, item.End))
+                {
+                    throw new ApiException(StatusCodes.Status400BadRequest, $"Start is included {item.Start}~{item.End}");
+                }
+
+                if (model.End.IsIncluded(item.Start, item.End))
+                {
+                    throw new ApiException(StatusCodes.Status400BadRequest, $"End is included {item.Start}~{item.End}");
+                }
+            }
+        }
+
+        currentTimetable.Start = model.Start;
+        currentTimetable.End = model.End;
+
+        await dbContext.SaveChangesAsync();
+
+        var result = new UserAvailableTimetableModel
+        {
+            Id = id,
+            DayOfWeek = DayOfWeek.Friday,
+            Start = model.Start,
+            End = model.End,
+        };
+
+        return Accepted($"/users/{userId}/timetables/{id}", result);
+    }
+
+    /// <summary>
+    /// Delete timetable item
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteTimetable([FromRoute] Guid userId, [FromRoute] Guid id)
+    {
+        var checkUserExists = await dbContext.Users.Where(x => x.Id == userId).AnyAsync();
+
+        if (!checkUserExists)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find user");
+        }
+
+        var currentTimetable = await dbContext.UserAvailableTimetables
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
+
+        if (currentTimetable == null)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find the timetable item");
+        }
+
+        dbContext.UserAvailableTimetables.Remove(currentTimetable);
+
+        await dbContext.SaveChangesAsync();
+
+        return Accepted();
+    }
 
     private readonly AppDbContext dbContext;
     private readonly ILogger logger;
