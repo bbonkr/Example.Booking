@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Booking.Entities", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Booking.Data.SqlServer", "src\Example.Booking.Data.SqlServer\Example.Booking.Data.SqlServer.csproj", "{A974A4BD-0017-41DC-BCD4-62D7F46C3A11}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Booking", "src\Example.Booking\Example.Booking.csproj", "{4273F488-FBEA-4253-93C0-71DBC5012B23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{A974A4BD-0017-41DC-BCD4-62D7F46C3A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A974A4BD-0017-41DC-BCD4-62D7F46C3A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A974A4BD-0017-41DC-BCD4-62D7F46C3A11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4273F488-FBEA-4253-93C0-71DBC5012B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4273F488-FBEA-4253-93C0-71DBC5012B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4273F488-FBEA-4253-93C0-71DBC5012B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4273F488-FBEA-4253-93C0-71DBC5012B23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
