@@ -101,3 +101,23 @@ public static class StringExtentions
     }
 }
 
+public static class TimeOnlyExtensions
+{
+    public static bool IsIncluded(this TimeOnly current, string start, string end)
+    {
+        var tmpStart = start.ToTimeOnly();
+        var tmpEnd = end.ToTimeOnly();
+
+        if (tmpStart.HasValue && tmpEnd.HasValue)
+        {
+            return current.IsIncluded(tmpStart.Value, tmpEnd.Value);
+        }
+
+        return false;
+    }
+
+    public static bool IsIncluded(this TimeOnly current, TimeOnly start, TimeOnly end)
+    {
+        return start <= current && current <= end;
+    }
+}

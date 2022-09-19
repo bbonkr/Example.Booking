@@ -190,6 +190,194 @@ public class UsersController : ApiControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Add user
+    /// </summary>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpPost]
+    [ProducesResponseType(typeof(UserModel), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status406NotAcceptable)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> AddUser([FromBody] AddUserModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Payload is invalid");
+        }
+
+        var user = await dbContext.Users
+            .Where(x => x.Name == model.Name)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
+        if (user != null)
+        {
+            throw new ApiException(StatusCodes.Status406NotAcceptable, "The user name has to be unique");
+        }
+
+        user = new Entities.User
+        {
+            Id = Guid.NewGuid(),
+            Name = model.Name,
+            BeforeEventBuffer = model.BeforeEventBuffer,
+            AfterEventBuffer = model.AfterEventBuffer,
+        };
+
+        var addedEntry = dbContext.Users.Add(user);
+
+        await dbContext.SaveChangesAsync();
+
+        var addedUserId = addedEntry.Entity.Id;
+        var result = new UserModel
+        {
+            Id = addedUserId,
+            Name = model.Name,
+            BeforeEventBuffer = model.BeforeEventBuffer,
+            AfterEventBuffer = model.AfterEventBuffer,
+        };
+
+        return Created($"/users/{addedUserId}", result);
+    }
+
+    /// <summary>
+    /// Update user
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="model"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(UserModel), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status406NotAcceptable)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            throw new ApiException(StatusCodes.Status400BadRequest, "Payload is invalid");
+        }
+
+        var hasSameNameUser = await dbContext.Users
+            .Where(x => x.Name == model.Name)
+            .Where(x => x.Id != id)
+            .AsNoTracking()
+            .AnyAsync();
+
+        if (hasSameNameUser)
+        {
+            throw new ApiException(StatusCodes.Status406NotAcceptable, "The user name has to be unique");
+        }
+
+        var user = await dbContext.Users
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            throw new ApiException(StatusCodes.Status406NotAcceptable, "Could not find the user");
+        }
+
+        user.Name = model.Name;
+        user.BeforeEventBuffer = model.BeforeEventBuffer;
+        user.AfterEventBuffer = model.AfterEventBuffer;
+
+        await dbContext.SaveChangesAsync();
+
+        var result = new UserModel
+        {
+            Id = user.Id,
+            Name = user.Name,
+            BeforeEventBuffer = model.BeforeEventBuffer,
+            AfterEventBuffer = model.AfterEventBuffer,
+        };
+
+        return Accepted($"/users/{user.Id}", result);
+    }
+
+    /// <summary>
+    /// Delete user
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="ApiException"></exception>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status202Accepted)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponseModel<ErrorModel>), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteUser([FromRoute] Guid id)
+    {
+        var hasAppointment = await dbContext.Appointments
+            .Where(x => x.FromUserId == id || x.ToUserId == id)
+            .AsNoTracking()
+            .AnyAsync();
+
+        if (hasAppointment)
+        {
+            throw new ApiException(StatusCodes.Status406NotAcceptable, "Could not delete the user who has appointment");
+        }
+
+        var user = await dbContext.Users.Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            throw new ApiException(StatusCodes.Status404NotFound, "Could not find the user");
+        }
+
+        using (var transaction = dbContext.Database.BeginTransaction())
+        {
+            try
+            {
+                var availableTimetables = dbContext.UserAvailableTimetables
+                    .Where(x => x.UserId == id);
+
+                if (availableTimetables.Any())
+                {
+                    foreach (var timetable in availableTimetables)
+                    {
+                        dbContext.UserAvailableTimetables.Remove(timetable);
+                    }
+
+                    await dbContext.SaveChangesAsync();
+                }
+
+                var overriedTimetables = dbContext.UserTimeTableOverrides
+                    .Where(x => x.UserId == id);
+
+                if (overriedTimetables.Any())
+                {
+                    foreach (var timetable in overriedTimetables)
+                    {
+                        dbContext.UserTimeTableOverrides.Remove(timetable);
+                    }
+
+                    await dbContext.SaveChangesAsync();
+                }
+
+                dbContext.Users.Remove(user);
+
+                await dbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return Accepted();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+
+                logger.LogError(ex, ex.Message);
+
+                throw;
+            }
+        }
+    }
+
     private readonly AppDbContext dbContext;
     private readonly ILogger logger;
 }

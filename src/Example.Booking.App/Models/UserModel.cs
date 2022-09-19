@@ -1,4 +1,5 @@
-﻿using Example.Booking.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Example.Booking.Entities;
 
 namespace Example.Booking.App.Models;
 
@@ -24,4 +25,34 @@ public class UserModel
     public virtual IEnumerable<AppointmentModel> RequestedAppointments { get; set; } = new List<AppointmentModel>();
 
     public virtual IEnumerable<AppointmentModel> ApprovedAppointments { get; set; } = new List<AppointmentModel>();
+}
+
+public class AddUserModel
+{
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Value should be minutes
+    /// </summary>
+    public int? BeforeEventBuffer { get; set; } = null;
+    /// <summary>
+    /// Value should be minutes
+    /// </summary>
+    public int? AfterEventBuffer { get; set; } = null;
+}
+
+public class UpdateUserModel
+{
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Value should be minutes
+    /// </summary>
+    public int? BeforeEventBuffer { get; set; } = null;
+    /// <summary>
+    /// Value should be minutes
+    /// </summary>
+    public int? AfterEventBuffer { get; set; } = null;
 }
