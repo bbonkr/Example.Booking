@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 	</PropertyGroup>
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -16,8 +16,8 @@
 		<PackageReference Include="kr.bbon.AspNetCore" Version="1.3.1" />
 		<PackageReference Include="kr.bbon.Core" Version="1.4.7" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.9">
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		  <PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
 	<ItemGroup>
@@ -26,16 +26,8 @@
 			</GlobalPropertiesToRemove>
 		</ProjectReference>
 		<ProjectReference Include="..\Example.Booking\Example.Booking.csproj">
-		  <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
+			<GlobalPropertiesToRemove>
+			</GlobalPropertiesToRemove>
 		</ProjectReference>
-	</ItemGroup>
-	<ItemGroup>
-		<None Remove="kr.bbon.AspNetCore" />
-		<None Remove="kr.bbon.Core" />
-		<None Remove="Models\" />
-		<None Remove="Microsoft.EntityFrameworkCore.Design" />
-	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Models\" />
 	</ItemGroup>
 </Project>
