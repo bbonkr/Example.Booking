@@ -236,7 +236,7 @@ public class BookingsController : ApiControllerBase
 
                 if (start.HasValue && end.HasValue)
                 {
-                    var startTime = start.Value.AddMinutes(toUser.BeforeEventBuffer ?? 0);
+                    var startTime = start.Value.AddMinutes((toUser.BeforeEventBuffer ?? 0) * -1);
                     var endTime = end.Value.AddMinutes(toUser.AfterEventBuffer ?? 0);
 
                     isIncluded = appointment.Start.IsIncluded(startTime, endTime) || appointment.End.IsIncluded(startTime, endTime);
@@ -252,6 +252,40 @@ public class BookingsController : ApiControllerBase
             if (isIncluded)
             {
                 throw new ApiException(StatusCodes.Status406NotAcceptable, "Requested data and time has been make appointment already");
+            }
+        }
+
+        var requestedAppointments = dbContext.Appointments
+            .Where(x => x.FromUserId == fromUser.Id)
+            .Where(x => x.Date.Date == appointment.Date.Date)
+            .AsNoTracking();
+
+        if (requestedAppointments.Any())
+        {
+            bool isIncluded = false;
+            foreach (var other in requestedAppointments)
+            {
+                var start = other.Start.ToTimeOnly();
+                var end = other.End.ToTimeOnly();
+
+                if (start.HasValue && end.HasValue)
+                {
+                    var startTime = start.Value;
+                    var endTime = end.Value;
+
+                    isIncluded = appointment.Start.IsIncluded(startTime, endTime) || appointment.End.IsIncluded(startTime, endTime);
+
+                    if (isIncluded) { break; }
+                }
+                else
+                {
+                    throw new ApiException(StatusCodes.Status406NotAcceptable, "Appointment data has been corrupted");
+                }
+            }
+
+            if (isIncluded)
+            {
+                throw new ApiException(StatusCodes.Status406NotAcceptable, "You have another an appointment at requested date and time");
             }
         }
 
